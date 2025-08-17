@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - ConnectRandom</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>ConnectRandom</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/login">Login</a>
+        <a href="/signup">Sign Up</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="form-box">
+        <h2>Login</h2>
+
+        {% if message %}
+        <p style="color: green; font-weight: bold">{{ message }}</p>
+        {% endif %}
+
+        <form method="post" action="/login">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required />
+
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required />
+
+          <button type="submit">Login</button>
+        </form>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2023 ConnectRandom. All rights reserved.</p>
+    </footer>
+  </body>
+</html>
