@@ -1,68 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign Up - ConnectRandom</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  </head>
-  <body>
-    <header>
-      <h1>ConnectRandom</h1>
-      <nav>
-        <a href="/">Home</a>
-        <a href="/login">Login</a>
-        <a href="/signup">Sign Up</a>
-      </nav>
-    </header>
-    <main>
-      <h2>Sign Up</h2>
-      <form class="signup-form" method="post" action="/signup">
-        
-        <label for="fullname">Full Name:</label>
-        <input type="text" id="fullname" name="fullname" value="{{ fullname or '' }}" required />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up - ConnectRandom</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header>
+    <h1>ConnectRandom</h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/login">Login</a>
+      <a href="/signup">Sign Up</a>
+    </nav>
+  </header>
 
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" value="{{ username or '' }}" required />
+  <main>
+    <h2>Sign Up</h2>
+    <form class="signup-form" method="post" action="/signup">
+      <!-- Two-column section -->
+      <div class="form-row">
+        <div class="form-column">
+          <label for="fullname">Full Name:</label>
+          <input type="text" id="fullname" name="fullname" value="{{ fullname or '' }}" required />
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" value="{{ username or '' }}" required />
 
-        <label for="contact">Contact Number (optional):</label>
-        <input type="text" id="contact" name="contact" value="{{ contact or '' }}" />
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required />
+        </div>
 
-        <label for="age">Age:</label>
-        <input type="number" id="age" name="age" value="{{ age or '' }}" min="18" required />
+        <div class="form-column">
+          <label for="contact">Contact Number (optional):</label>
+          <input type="text" id="contact" name="contact" value="{{ contact or '' }}" />
 
-        <label for="gender">Gender:</label>
-        <select id="gender" name="gender" required>
-          <option value="" disabled {% if not gender %}selected{% endif %}>Select Gender</option>
-          <option value="male" {% if gender == "male" %}selected{% endif %}>Male</option>
-          <option value="female" {% if gender == "female" %}selected{% endif %}>Female</option>
-        </select>
+          <label for="age">Age:</label>
+          <input type="number" id="age" name="age" value="{{ age or '' }}" min="18" required />
 
-        <label for="identifier">Email:</label>
-        <input type="email" id="identifier" name="identifier" value="{{ identifier or '' }}" required />
+          <label for="gender">Gender:</label>
+          <select id="gender" name="gender" required>
+            <option value="" disabled {% if not gender %}selected{% endif %}>Select Gender</option>
+            <option value="male" {% if gender == "male" %}selected{% endif %}>Male</option>
+            <option value="female" {% if gender == "female" %}selected{% endif %}>Female</option>
+          </select>
+        </div>
+      </div>
 
-        {% if not otp_requested %}
-          <!-- Step 1: request OTP -->
-          <button type="submit" name="action" value="request_otp">Generate OTP</button>
-        {% else %}
-          <!-- Step 2: verify OTP and complete signup -->
-          <label for="otp">Enter OTP:</label>
-          <input type="text" id="otp" name="otp" required />
+      <!-- Full-width fields -->
+      <label for="city">City:</label>
+      <select id="city" name="city" required>
+        <option value="" disabled selected>Select City</option>
+        <option value="Indore" {% if city == "Indore" %}selected{% endif %}>Indore</option>
+        <option value="Pune" {% if city == "Pune" %}selected{% endif %}>Pune</option>
+        <option value="Bangalore" {% if city == "Bangalore" %}selected{% endif %}>Bangalore</option>
+        <option value="Mumbai" {% if city == "Mumbai" %}selected{% endif %}>Mumbai</option>
+        <option value="Chennai" {% if city == "Chennai" %}selected{% endif %}>Chennai</option>
+        <option value="Delhi" {% if city == "Delhi" %}selected{% endif %}>Delhi</option>
+        <option value="Goa" {% if city == "Goa" %}selected{% endif %}>Goa</option>
+      </select>
 
-          <button type="submit" name="action" value="complete_signup">Complete Signup</button>
-        {% endif %}
-      </form>
+      <label for="identifier">Email:</label>
+      <input type="email" id="identifier" name="identifier" value="{{ identifier or '' }}" required />
 
-      {% if message %}
-        <p style="color: red;">{{ message }}</p>
+      {% if not otp_requested %}
+        <button type="submit" name="action" value="request_otp">Generate OTP</button>
+      {% else %}
+        <label for="otp">Enter OTP:</label>
+        <input type="text" id="otp" name="otp" required />
+        <button type="submit" name="action" value="verify_otp">Verify OTP</button>
       {% endif %}
-    </main>
-    <footer>
-      <p>&copy; 2023 ConnectRandom. All rights reserved.</p>
-    </footer>
-  </body>
+    </form>
+
+    {% if message %}
+      <p class="message">{{ message }}</p>
+    {% endif %}
+  </main>
+
+  <footer>
+    <p>&copy; 2025 ConnectRandom. All rights reserved.</p>
+  </footer>
+</body>
 </html>

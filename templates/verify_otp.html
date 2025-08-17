@@ -1,25 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Verify OTP</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify OTP - ConnectRandom</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
     />
   </head>
   <body>
-    <main class="form-box">
-      <h2>Verify OTP</h2>
-      <p>We sent an OTP to your email. Enter it below to continue.</p>
-      {% if message %}
-      <p style="color: red">{{ message }}</p>
-      {% endif %}
-      <form method="POST" action="/verify_otp">
-        <input type="hidden" name="identifier" value="{{ identifier }}" />
-        <label for="otp">OTP</label>
+    <header>
+      <h1>ConnectRandom</h1>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/login">Login</a>
+        <a href="/signup">Sign Up</a>
+      </nav>
+    </header>
+
+    <main>
+      <h2>OTP Verification</h2>
+      <p>
+        An OTP has been sent to your email: <strong>{{ identifier }}</strong>
+      </p>
+
+      <form
+        method="POST"
+        action="{{ url_for('verify_otp_page') }}?identifier={{ identifier }}"
+      >
+        <label for="otp">Enter OTP:</label>
         <input type="text" id="otp" name="otp" required />
-        <button type="submit">Verify</button>
+
+        <button type="submit">Verify OTP</button>
       </form>
+
+      {% if message %}
+      <p class="message">{{ message }}</p>
+      {% endif %}
     </main>
+
+    <footer>
+      <p>&copy; 2025 ConnectRandom. All rights reserved.</p>
+    </footer>
   </body>
 </html>

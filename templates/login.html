@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - ConnectRandom</title>
     <link
@@ -19,29 +18,24 @@
         <a href="/signup">Sign Up</a>
       </nav>
     </header>
-
     <main>
-      <div class="form-box">
-        <h2>Login</h2>
+      <h2>Login</h2>
+      <form method="post" action="/login">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required />
 
-        {% if message %}
-        <p style="color: green; font-weight: bold">{{ message }}</p>
-        {% endif %}
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required />
 
-        <form method="post" action="/login">
-          <label for="username">Username:</label>
-          <input type="text" id="username" name="username" required />
+        <button type="submit">Login</button>
+      </form>
 
-          <label for="password">Password:</label>
-          <input type="password" id="password" name="password" required />
-
-          <button type="submit">Login</button>
-        </form>
-      </div>
+      {% if message %}
+      <p style="color: red">{{ message }}</p>
+      {% endif %}
     </main>
-
     <footer>
-      <p>&copy; 2023 ConnectRandom. All rights reserved.</p>
+      <p>&copy; 2025 ConnectRandom. All rights reserved.</p>
     </footer>
   </body>
 </html>
