@@ -166,3 +166,22 @@ footer {
 .signup-form button:hover {
     background-color: #357abd;
 }
+
+.signup-form .form-row {
+    display: flex;
+    gap: 20px;
+    /* space between left and right */
+    flex-wrap: wrap;
+    /* for smaller screens */
+}
+
+.signup-form .form-column {
+    flex: 1;
+    /* take equal width */
+    min-width: 200px;
+    /* prevent too small on narrow screens */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* spacing between labels and inputs */
+}
