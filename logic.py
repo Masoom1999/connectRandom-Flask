@@ -74,11 +74,13 @@ def verify_otp(identifier, otp_entered, User, db):
     # Check duplicates
     if User.query.filter_by(username=stored["data"]["username"]).first():
         return False, "Username already taken"
-    if User.query.filter_by(identifier=identifier).first():
+    
+    # Updated: check email instead of identifier column
+    if User.query.filter_by(email=identifier).first():
         return False, "Email already registered"
 
     # Save user
-    new_user = User(**stored["data"], identifier=identifier)
+    new_user = User(**stored["data"], email=identifier)  # use email here
     db.session.add(new_user)
     db.session.commit()
     otp_storage.pop(identifier, None)
