@@ -9,15 +9,23 @@ from asgiref.wsgi import WsgiToAsgi
 from models import db, User
 import logic
 from flask import session 
-
-
+from flask import request, jsonify
+from logic import get_conversation, save_message
+from flask import request, jsonify, session
+from logic import Message, db
+from models import db, User, Message
 # ------------------ Setup ------------------
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 CORS(app)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+# app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# db.init_app(app)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///connectrandom.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 db.init_app(app)
 
 logging.basicConfig(level=logging.INFO)
@@ -128,6 +136,53 @@ def user_home():
 def logout():
     session.clear()
     return redirect(url_for("login", message="Logged out successfully"))
+
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    data = request.get_json()
+
+    to_user = data.get("to_user")
+    from_user = data.get("from_user")
+    message_content = data.get("message_content")
+
+    if not to_user or not from_user or not message_content:
+        return jsonify({"status": "error", "message": "Missing data"}), 400
+
+    msg = Message(
+        to_user=to_user,
+        from_user=from_user,
+        message_content=message_content  # ✅ matches models.py
+    )
+    db.session.add(msg)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Message sent"})
+
+@app.route("/get_messages/<chat_with>", methods=["GET"])
+def get_messages(chat_with):
+    current_user = session.get("username")  # or however you store logged-in user
+    if not current_user:
+        return jsonify({"status": "error", "message": "Not logged in"}), 403
+
+    # fetch both directions of conversation
+    messages = Message.query.filter(
+        ((Message.from_user == current_user) & (Message.to_user == chat_with)) |
+        ((Message.from_user == chat_with) & (Message.to_user == current_user))
+    ).order_by(Message.timestamp.asc()).all()
+
+    return jsonify({
+        "status": "success",
+        "messages": [
+            {
+                "id": m.message_id,
+                "from_user": m.from_user,
+                "to_user": m.to_user,
+                "message_content": m.message_content,
+                "timestamp": m.timestamp.isoformat()
+            }
+            for m in messages
+        ]
+    })
 
 
 # ------------------ ASGI ------------------

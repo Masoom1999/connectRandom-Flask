@@ -4,6 +4,7 @@ import smtplib
 import logging
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
+from models import db, Message, User
 
 logger = logging.getLogger("flask-app")
 otp_storage = {}  # {identifier: {"otp": ..., "expiry": ..., "purpose": ..., "data": ...}}
@@ -91,3 +92,20 @@ def login_user(username, password, User):
     if password != user.password_hash:
         return False, "Invalid password"
     return True, f"Welcome back, {username}!"
+
+def save_message(from_user, to_user, content):
+    """Save a chat message to the database."""
+    msg = Message(from_user=from_user, to_user=to_user, message_content=content)
+    db.session.add(msg)
+    db.session.commit()
+    return msg
+
+def get_conversation(user1, user2):
+    """Fetch all messages between two users ordered by timestamp."""
+    msgs = Message.query.filter(
+        db.or_(
+            db.and_(Message.from_user == user1, Message.to_user == user2),
+            db.and_(Message.from_user == user2, Message.to_user == user1),
+        )
+    ).order_by(Message.timestamp.asc()).all()
+    return msgs
