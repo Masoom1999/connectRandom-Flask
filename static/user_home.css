@@ -9,39 +9,30 @@
     --muted: #666;
     --panel: #fff;
     --line: #e5e7eb;
+    --chat-bg: #f4f6f8;
 }
 
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+    background: #f9f9f9;
     color: var(--text);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    line-height: 1.5;
-}
-
-h1,
-h3 {
-    margin: 0 0 12px;
-}
-
-p {
-    margin: 0 0 10px;
 }
 
 /* ---------- Header / Footer ---------- */
 header {
-    background-color: var(--blue);
-    color: white;
+    background: var(--blue);
+    color: #fff;
     padding: 20px;
     text-align: center;
 }
 
 header nav a {
-    color: white;
-    margin: 0 15px;
+    color: #fff;
+    margin: 0 12px;
     text-decoration: none;
     font-weight: bold;
 }
@@ -51,81 +42,82 @@ header nav a:hover {
 }
 
 footer {
-    background-color: #f1f1f1;
-    padding: 15px 0;
-    font-size: 0.9em;
-    color: #777;
+    background: #f1f1f1;
+    padding: 12px 0;
     text-align: center;
+    color: #777;
+    font-size: 0.9rem;
 }
 
 /* ---------- Main Layout ---------- */
 .user-home-container {
     flex: 1;
     width: 100%;
-    padding: 20px 0;
-    /* no side padding so left panel is truly flush left */
+    padding: 16px 0;
+    /* no left padding so the left panel can sit flush */
 }
 
 .panes {
     display: grid;
     grid-template-columns: 340px 1fr;
-    /* LEFT fixed, RIGHT flexible */
-    gap: 40px;
+    /* left fixed, right flexible */
+    gap: 32px;
     height: calc(100vh - 160px);
-    /* header + footer est. */
-    padding-left: 0;
-    /* flush to extreme left */
+    /* header+footer estimate */
     padding-right: 60px;
-    /* ~1 inch inset on the right panel */
+    /* ~1 inch inset from the right edge */
 }
 
-/* ---------- Left Panel (Users) ---------- */
+/* ---------- Left Panel ---------- */
 .left-panel {
     background: var(--panel);
     padding: 12px;
     border-radius: 8px;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.08);
     overflow-y: auto;
-    /* own scrollbar */
-}
-
-.city-users {
-    max-height: 520px;
-    overflow-y: auto;
-    /* inner scroll for long lists */
-    padding-right: 6px;
-    /* room for scrollbar */
+    /* its own scrollbar */
 }
 
 .user-card {
     border: 1px solid var(--line);
+    border-radius: 8px;
     padding: 10px;
     margin-bottom: 10px;
-    border-radius: 6px;
     background: #fafafa;
     text-align: left;
+}
+
+.city-users {
+    max-height: 52vh;
+    /* keep list within the page */
+    overflow-y: auto;
+    padding-right: 6px;
+    /* space for scrollbar */
+}
+
+.city-user {
     cursor: pointer;
     transition: background 0.15s ease, transform 0.05s ease;
 }
 
-.user-card:hover {
+.city-user:hover {
     background: #e9f3ff;
 }
 
-.user-card:active {
+.city-user:active {
     transform: scale(0.998);
 }
 
-/* ---------- Right Panel (Chat) ---------- */
+/* ---------- Right Panel / Chat ---------- */
 .right-panel {
     background: var(--panel);
     padding: 12px;
     border-radius: 8px;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     margin-right: 60px;
-    /* ~1 inch from right edge */
+    /* lines up with panes right padding */
 }
 
 .chat-window {
@@ -135,8 +127,25 @@ footer {
     border: 1px solid var(--line);
     border-radius: 8px;
     overflow: hidden;
-    /* keeps header/input edges tidy */
+    /* tidy edges */
     background: #fff;
+    min-height: 0;
+    /* allow child to shrink for flexbox overflow */
+}
+
+.chat-messages {
+    flex: 1;
+    min-height: 0;
+    /* enables proper flex scroll */
+    padding: 12px;
+    background: var(--chat-bg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    /* stack vertically */
+    align-items: flex-start;
+    /* default left alignment */
+    gap: 8px;
 }
 
 .chat-header {
@@ -146,64 +155,75 @@ footer {
     background: #f7faff;
 }
 
-.chat-messages {
-    flex-grow: 1;
-    padding: 0.5rem;
-    overflow-y: auto;
 
-    /* 👇 force children to stack vertically */
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    /* keeps them left aligned */
-}
-
-/* Message bubbles (simple styling) */
-
-
-.chat-messages p {
-    margin: 6px 0;
-    padding: 8px 12px;
-    background: #f5f5f5;
-    border-radius: 6px;
+/* Message bubbles */
+.message {
     max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #eaeaea;
     word-wrap: break-word;
+    white-space: pre-wrap;
+    /* keep line breaks and wrap long text */
+    font-size: 14px;
 }
 
-/* ---------- Chat Input Row ---------- */
+/* Sent by current user (right side) */
+.message.sent {
+    align-self: flex-end;
+    background: #d1f0d1;
+}
+
+/* Received from other user (left side) */
+.message.received {
+    align-self: flex-start;
+    background: #e0e0e0;
+}
+
+/* Input row */
 .chat-input {
     display: flex;
-    gap: 0;
+    gap: 8px;
     border-top: 1px solid var(--line);
-    padding: 0;
+    padding: 10px;
+    background: #fff;
 }
 
-.chat-input input {
+/* Support BOTH input and textarea (use textarea for wrapping) */
+.chat-input input,
+.chat-input textarea {
     flex: 1;
-    padding: 12px;
+    padding: 10px;
     border: 1px solid var(--line);
-    border-right: none;
-    border-bottom-left-radius: 8px;
-    outline: none;
+    border-radius: 8px;
     font-size: 1rem;
+    outline: none;
+}
+
+/* If you switch to <textarea>, these make it grow & wrap nicely */
+.chat-input textarea {
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.35;
 }
 
 .chat-input button {
-    padding: 12px 18px;
-    background-color: var(--blue);
+    padding: 10px 16px;
+    background: var(--blue);
     color: #fff;
-    border: 1px solid var(--blue);
-    border-bottom-right-radius: 8px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
 }
 
 .chat-input button:hover {
-    filter: brightness(0.92);
+    filter: brightness(0.95);
 }
 
-/* ---------- Simple Scrollbar Polish (optional) ---------- */
+/* ---------- Nice scrollbars (optional) ---------- */
 .left-panel::-webkit-scrollbar,
 .city-users::-webkit-scrollbar,
 .chat-messages::-webkit-scrollbar {
