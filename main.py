@@ -1,76 +1,39 @@
-import secrets
-import smtplib
+# main.py
 import logging
-from datetime import datetime, timedelta
-from email.mime.text import MIMEText
+from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from asgiref.wsgi import WsgiToAsgi
 
+from models import db, User
+import logic
+from flask import session 
+from flask import request, jsonify
+from logic import get_conversation, save_message
+from flask import request, jsonify, session
+from logic import Message, db
+from models import db, User, Message
 # ------------------ Setup ------------------
 app = Flask(__name__)
+app.secret_key = "supersecretkey"
 CORS(app)
 
-# SQLite DB setup
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+# app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# db.init_app(app)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///connectrandom.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+
+db.init_app(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("flask-app")
 
-# ------------------ Models ------------------
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    fullname = db.Column(db.String(150), nullable=False)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)  # store hashed password
-    contact = db.Column(db.String(20))
-    age = db.Column(db.Integer, nullable=False)
-    gender = db.Column(db.String(10), nullable=False)
-    city = db.Column(db.String(100))  # add city column
-    identifier = db.Column(db.String(120), unique=True, nullable=False)  # email
-
-
-
-# Create tables if not exist
+# Create tables
 with app.app_context():
     db.create_all()
-
-# ------------------ OTP Store ------------------
-otp_storage = {}  # {email: {"otp": ..., "expiry": ..., "purpose": ..., "data": ...}}
-
-# SMTP config (replace with your real values)
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_EMAIL = "noreply.connectrandom@gmail.com"
-SMTP_PASSWORD = "jraqlskipdwqqrtv"  # ⚠️ Gmail App Password
-
-# ------------------ Helpers ------------------
-def generate_otp() -> str:
-    return "".join(secrets.choice("0123456789") for _ in range(6))
-
-def send_email_otp(to_email: str, otp: str):
-    subject = f"Your ConnectRandom OTP: {otp}"
-    body = f"Your ConnectRandom OTP is: {otp}\nThis code will expire in 5 minutes."
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = SMTP_EMAIL
-    msg["To"] = to_email
-
-    try:
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=20)
-        server.starttls()
-        server.login(SMTP_EMAIL, SMTP_PASSWORD)
-        server.sendmail(SMTP_EMAIL, [to_email], msg.as_string())
-        server.quit()
-        logger.info(f"Sent OTP to {to_email}")
-    except Exception:
-        logger.exception("Failed to send OTP email")
-        return False
-    return True
 
 # ------------------ Routes ------------------
 @app.route("/")
@@ -90,10 +53,15 @@ def login():
         if password != user.password_hash:
             return "Invalid password", 401
 
-        return f"Welcome back, {username}!"
+        # Store user info in session
+        session["user_id"] = user.id
+        session["username"] = user.username
+        session["city"] = user.city
+
+        return redirect(url_for("user_home"))
+
     return render_template("login.html", message=message)
 
-# ------------------ Routes ------------------
 @app.route("/signup", methods=["GET", "POST"])
 def signup_page():
     if request.method == "POST":
@@ -106,96 +74,116 @@ def signup_page():
         identifier = request.form.get("identifier")
         city = request.form.get("city")
 
-        logger.info(f"Signup form submitted: fullname={fullname}, username={username}, password=***, contact={contact}, age_raw={age_raw}, gender={gender}, identifier={identifier}, city={city}")
-
         # Validate age
-        try:
-            age = int(age_raw)
-            if age < 18:
-                return render_template("signup.html", message="Age must be 18+", 
-                                       fullname=fullname, username=username,
-                                       contact=contact, age=age_raw, gender=gender,
-                                       identifier=identifier, city=city)
-            logger.info(f"Parsed age: {age}")
-        except Exception:
-            logger.exception("Failed to parse age")
-            return render_template("signup.html", message="Invalid age",
+        valid, age_or_msg = logic.validate_age(age_raw)
+        if not valid:
+            return render_template("signup.html", message=age_or_msg,
                                    fullname=fullname, username=username,
                                    contact=contact, age=age_raw, gender=gender,
                                    identifier=identifier, city=city)
+        age = age_or_msg
 
-        # Generate OTP
-        otp_code = generate_otp()
-        print(f"Generated OTP: {otp_code}")
-        expiry = datetime.now() + timedelta(minutes=5)
-        otp_storage[identifier] = {
-            "otp": otp_code,
-            "expiry": expiry,
-            "purpose": "signup",
-            "data": {
-                "fullname": fullname,
-                "username": username,
-                "password_hash": password,  # store plain for now, or hash if desired
-                "contact": contact,
-                "age": age,
-                "gender": gender,
-                "city": city
-            },
+        user_data = {
+            "fullname": fullname,
+            "username": username,
+            "password_hash": password,
+            "contact": contact,
+            "age": age,
+            "gender": gender,
+            "city": city
         }
 
-
-        if send_email_otp(identifier, otp_code):
-            logger.info(f"Sent OTP to {identifier}")
-        else:
+        otp_code = logic.store_signup_otp(identifier, user_data)
+        if not logic.send_email_otp(identifier, otp_code):
             return render_template("signup.html", message="Failed to send OTP. Try again.")
 
-        # Redirect to OTP verification page
         return redirect(url_for("verify_otp_page", identifier=identifier))
-
-    # GET request
     return render_template("signup.html")
-
 
 @app.route("/verify_otp", methods=["GET", "POST"])
 def verify_otp_page():
     identifier = request.args.get("identifier")
-    stored = otp_storage.get(identifier)
-
-    if not stored:
-        logger.warning(f"No OTP data found for identifier: {identifier}")
+    if not identifier:
         return redirect(url_for("signup_page"))
-
-    logger.info(f"Accessing OTP verification page for identifier: {identifier}")
 
     if request.method == "POST":
         otp_entered = request.form.get("otp")
-        logger.info(f"OTP entered: {otp_entered}")
+        success, msg = logic.verify_otp(identifier, otp_entered, User, db)
+        if success:
+            return redirect(url_for("login", message="OTP verified successfully! Please login."))
+        else:
+            return render_template("verify_otp.html", identifier=identifier, message=msg)
 
-        if otp_entered != stored["otp"]:
-            logger.warning(f"Invalid OTP entered for {identifier}")
-            return render_template("verify_otp.html", identifier=identifier, message="Invalid OTP")
-        if stored["expiry"] < datetime.now():
-            logger.warning(f"Expired OTP for {identifier}")
-            return render_template("verify_otp.html", identifier=identifier, message="OTP expired. Please signup again.")
-
-        # Check duplicates
-        if User.query.filter_by(username=stored["data"]["username"]).first():
-            return "Username already taken", 400
-        if User.query.filter_by(identifier=identifier).first():
-            return "Email already registered", 400
-
-        # Save user
-        new_user = User(**stored["data"], identifier=identifier)
-        db.session.add(new_user)
-        db.session.commit()
-        otp_storage.pop(identifier, None)
-        logger.info(f"User {stored['data']['username']} created successfully")
-
-        return redirect(url_for("login", message="OTP verified successfully! Please login."))
-
-    # GET request
-    logger.info(f"Rendering OTP verification page for identifier: {identifier}")
     return render_template("verify_otp.html", identifier=identifier)
+
+
+@app.route("/user_home")
+def user_home():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login", message="Please login first"))
+
+    current_user = User.query.get(user_id)
+    if not current_user:
+        return redirect(url_for("login", message="User not found"))
+
+    # Get all users from the same city except current user
+    city_users = User.query.filter(User.city == current_user.city, User.id != user_id).all()
+
+    return render_template("user_home.html", user=current_user, city_users=city_users)
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login", message="Logged out successfully"))
+
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    data = request.get_json()
+
+    to_user = data.get("to_user")
+    from_user = data.get("from_user")
+    message_content = data.get("message_content")
+
+    if not to_user or not from_user or not message_content:
+        return jsonify({"status": "error", "message": "Missing data"}), 400
+
+    msg = Message(
+        to_user=to_user,
+        from_user=from_user,
+        message_content=message_content  # ✅ matches models.py
+    )
+    db.session.add(msg)
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "Message sent"})
+
+@app.route("/get_messages/<chat_with>", methods=["GET"])
+def get_messages(chat_with):
+    current_user = session.get("username")  # or however you store logged-in user
+    if not current_user:
+        return jsonify({"status": "error", "message": "Not logged in"}), 403
+
+    # fetch both directions of conversation
+    messages = Message.query.filter(
+        ((Message.from_user == current_user) & (Message.to_user == chat_with)) |
+        ((Message.from_user == chat_with) & (Message.to_user == current_user))
+    ).order_by(Message.timestamp.asc()).all()
+
+    return jsonify({
+        "status": "success",
+        "messages": [
+            {
+                "id": m.message_id,
+                "from_user": m.from_user,
+                "to_user": m.to_user,
+                "message_content": m.message_content,
+                "timestamp": m.timestamp.isoformat()
+            }
+            for m in messages
+        ]
+    })
+
 
 # ------------------ ASGI ------------------
 asgi_app = WsgiToAsgi(app)

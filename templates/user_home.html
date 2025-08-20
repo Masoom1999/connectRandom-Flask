@@ -2,36 +2,79 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Home - ConnectRandom</title>
+    <title>User Home</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
+      href="{{ url_for('static', filename='user_home.css') }}"
     />
   </head>
   <body>
     <header>
-      <h1>Welcome, {{ username }}!</h1>
+      <h1>Welcome, {{ user.fullname }}</h1>
       <nav>
-        <a href="#">Profile</a>
-        <a href="#">Active Chats</a>
-        <a href="/logout">Logout</a>
+        <a href="#">Profile</a> |
+        <a href="{{ url_for('logout') }}">Logout</a>
       </nav>
     </header>
-    <main>
-      <h2>Users in {{ city }}</h2>
-      {% if users %}
-      <ul>
-        {% for user in users %} {% if user.username != username %}
-        <li>{{ user.fullname }} ({{ user.username }})</li>
-        {% endif %} {% endfor %}
-      </ul>
-      {% else %}
-      <p>No other users in your city yet.</p>
-      {% endif %}
+
+    <main class="user-home-container">
+      <div class="panes">
+        <!-- LEFT PANEL -->
+        <section class="left-panel">
+          <h3>Your Info</h3>
+          <div class="user-card">
+            <p><strong>Name:</strong> {{ user.fullname }}</p>
+            <p><strong>Age:</strong> {{ user.age }}</p>
+            <p><strong>Gender:</strong> {{ user.gender }}</p>
+            <p><strong>City:</strong> {{ user.city }}</p>
+          </div>
+
+          <h3 style="margin-top: 20px">Users in your city</h3>
+          <div class="city-users">
+            {% for u in city_users %}
+            <div class="user-card city-user" data-username="{{ u.username }}">
+              <p><strong>Name:</strong> {{ u.fullname }}</p>
+              <p><strong>Age:</strong> {{ u.age }}</p>
+              <p><strong>Gender:</strong> {{ u.gender }}</p>
+            </div>
+            {% else %}
+            <p>No other users in your city yet.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <!-- RIGHT PANEL -->
+        <section class="right-panel">
+          <h3>Chat Window</h3>
+          <div class="chat-window">
+            <div class="chat-header" id="chatHeader">Select a user to chat</div>
+
+            <!-- messages container -->
+            <div class="chat-messages" id="chatMessages">
+              <p style="color: #666">Messages will appear here...</p>
+            </div>
+
+            <!-- input row: use textarea so long messages wrap -->
+            <div class="chat-input">
+              <textarea
+                id="chatInput"
+                placeholder="Type a message (Shift+Enter for newline)"
+              ></textarea>
+              <button id="sendBtn">Send</button>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
-    <footer>
-      <p>&copy; 2025 ConnectRandom. All rights reserved.</p>
-    </footer>
+
+    <footer>&copy; 2025 ConnectRandom</footer>
+
+    <!-- Inject current user into JS -->
+    <script>
+      const CURRENT_USERNAME = "{{ user.username }}";
+    </script>
+
+    <!-- new JS -->
+    <script src="{{ url_for('static', filename='user_home.js') }}"></script>
   </body>
 </html>
