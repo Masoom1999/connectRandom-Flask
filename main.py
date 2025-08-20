@@ -68,7 +68,7 @@ def signup_page():
         fullname = request.form.get("fullname")
         username = request.form.get("username")
         password = request.form.get("password")
-        contact = request.form.get("contact")
+        # contact = request.form.get("contact")
         age_raw = request.form.get("age")
         gender = request.form.get("gender")
         identifier = request.form.get("identifier")
@@ -79,7 +79,8 @@ def signup_page():
         if not valid:
             return render_template("signup.html", message=age_or_msg,
                                    fullname=fullname, username=username,
-                                   contact=contact, age=age_raw, gender=gender,
+                                #    contact=contact,
+                                     age=age_raw, gender=gender,
                                    identifier=identifier, city=city)
         age = age_or_msg
 
@@ -87,7 +88,7 @@ def signup_page():
             "fullname": fullname,
             "username": username,
             "password_hash": password,
-            "contact": contact,
+            # "contact": contact,
             "age": age,
             "gender": gender,
             "city": city
